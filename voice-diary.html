@@ -187,6 +187,11 @@
         <div class="provider-link-item">Gemini（免費）：<a href="https://aistudio.google.com/apikey" target="_blank">申請 Key ↗</a></div>
         <div class="provider-link-item">OpenAI：<a href="https://platform.openai.com/api-keys" target="_blank">申請 Key ↗</a></div>
       </div>
+      <div style="margin-top:10px">
+        <button class="btn" style="color:var(--danger-color);border-color:rgba(163,45,45,0.3);font-size:12px;height:32px;" onclick="clearAllKeys()">
+          <i class="ti ti-trash"></i>清除所有已儲存的 Key
+        </button>
+      </div>
     </div>
 
     <div class="card">
@@ -694,6 +699,17 @@ function copyDiary() {
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 1800);
   });
+}
+
+// ── Clear all keys ────────────────────────────────────────────────────────────
+function clearAllKeys() {
+  if (!confirm("確定要刪除所有已儲存的 API Key 嗎？")) return;
+  localStorage.removeItem("diary_key_store");
+  localStorage.removeItem("diary_api_key");
+  apiKey = "";
+  renderKeyList();
+  updateActiveKeyStatus();
+  document.getElementById("api-key-input").value = "";
 }
 
 // ── Auto-enter main screen if key already saved ───────────────────────────────
