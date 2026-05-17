@@ -2,347 +2,116 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="語音日記">
 <title>語音日記助手</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #ffffff;
-    --bg-secondary: #f5f4f0;
-    --bg-tertiary: #eeede8;
-    --text: #1a1a18;
-    --text-secondary: #5f5e5a;
-    --text-tertiary: #888780;
-    --border: rgba(0,0,0,0.12);
-    --border-md: rgba(0,0,0,0.22);
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --accent: #1a1a18;
-    --accent-text: #ffffff;
-    --success: #0F6E56;
-    --danger: #A32D2D;
-    --danger-bg: #FAECE7;
-    --danger-border: #f09595;
+    --bg: #ffffff; --bg-secondary: #f5f4f0; --bg-tertiary: #eeede8;
+    --text: #1a1a18; --text-secondary: #5f5e5a; --text-tertiary: #888780;
+    --border: rgba(0,0,0,0.12); --border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px; --radius-lg: 12px;
+    --success: #0F6E56; --danger-color: #A32D2D; --danger-bg: #FAECE7;
+    --recording-color: #D85A30;
   }
-
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1c1c1a;
-      --bg-secondary: #242422;
-      --bg-tertiary: #2c2c2a;
-      --text: #f0efe9;
-      --text-secondary: #b4b2a9;
-      --text-tertiary: #888780;
-      --border: rgba(255,255,255,0.1);
-      --border-md: rgba(255,255,255,0.2);
-      --accent: #f0efe9;
-      --accent-text: #1c1c1a;
-      --success: #5DCAA5;
-      --danger: #f09595;
-      --danger-bg: #2a1a16;
-      --danger-border: #993C1D;
+      --bg: #1c1c1a; --bg-secondary: #242422; --bg-tertiary: #2c2c2a;
+      --text: #f0efe9; --text-secondary: #b4b2a9; --text-tertiary: #888780;
+      --border: rgba(255,255,255,0.1); --border-md: rgba(255,255,255,0.2);
+      --success: #5DCAA5; --danger-color: #f09595; --danger-bg: #2a1a16;
     }
   }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-    background: var(--bg-tertiary);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 2rem 1rem;
+    background: var(--bg-tertiary); color: var(--text);
+    min-height: 100vh; display: flex; align-items: flex-start; justify-content: center;
+    padding: max(env(safe-area-inset-top), 1.5rem) 1rem max(env(safe-area-inset-bottom), 1.5rem);
   }
-
-  .container {
-    width: 100%;
-    max-width: 560px;
-  }
-
-  .app-title {
-    font-size: 18px;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text);
-  }
-
-  .app-title .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--text-tertiary);
-  }
-
-  .card {
-    background: var(--bg);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    margin-bottom: 8px;
-  }
-
-  input[type="text"],
-  input[type="password"],
-  textarea {
-    width: 100%;
-    background: var(--bg-secondary);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 1.6;
+  .container { width: 100%; max-width: 560px; padding-bottom: 2rem; }
+  .app-title { font-size: 18px; font-weight: 500; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+  .app-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-tertiary); }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+  input[type="text"], input[type="password"], textarea {
+    width: 100%; background: var(--bg-secondary); border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); color: var(--text); font-family: inherit;
+    font-size: 14px; line-height: 1.6; outline: none; -webkit-appearance: none;
     transition: border-color 0.15s;
-    outline: none;
   }
-
-  input[type="text"]:focus,
-  input[type="password"]:focus,
-  textarea:focus {
-    border-color: var(--border-md);
-  }
-
-  input[type="text"],
-  input[type="password"] {
-    height: 38px;
-    padding: 0 12px;
-  }
-
-  textarea {
-    padding: 10px 12px;
-    resize: vertical;
-    min-height: 120px;
-  }
-
+  input[type="text"]:focus, input[type="password"]:focus, textarea:focus { border-color: var(--border-md); }
+  input[type="text"], input[type="password"] { height: 38px; padding: 0 12px; }
+  textarea { padding: 10px 12px; resize: vertical; min-height: 110px; }
   .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 14px;
-    height: 38px;
-    border-radius: var(--radius-md);
-    border: 0.5px solid var(--border-md);
-    background: transparent;
-    color: var(--text);
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; height: 38px;
+    border-radius: var(--radius-md); border: 0.5px solid var(--border-md);
+    background: transparent; color: var(--text); font-size: 13px; font-family: inherit;
+    cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
     transition: background 0.12s, opacity 0.12s;
   }
-  .btn:hover { background: var(--bg-secondary); }
-  .btn:active { transform: scale(0.98); }
-
-  .btn-primary {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-  }
-  .btn-primary:hover { opacity: 0.85; background: var(--accent); }
+  .btn:hover, .btn:active { background: var(--bg-secondary); }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-primary:hover, .btn-primary:active { opacity: 0.85; background: var(--text); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .btn-full {
-    width: 100%;
-    justify-content: center;
-    height: 42px;
-  }
-
-  .api-row {
-    display: flex;
-    gap: 8px;
-  }
+  .btn-full { width: 100%; justify-content: center; height: 44px; font-size: 14px; }
+  .api-row { display: flex; gap: 8px; }
   .api-row input { flex: 1; }
-
-  .hint {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-top: 6px;
-    line-height: 1.5;
-  }
+  .hint { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.5; }
   .hint a { color: var(--text-secondary); }
-
-  #key-status {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-top: 6px;
-  }
+  #key-status { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; }
   #key-status.ok { color: var(--success); }
-
-  .radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .radio-label {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    line-height: 1.4;
-  }
-  .radio-label input { margin-top: 2px; flex-shrink: 0; }
-  .radio-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
-
-  .style-pills {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
+  .radio-group { display: flex; flex-direction: column; gap: 10px; }
+  .radio-label { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; cursor: pointer; line-height: 1.4; }
+  .radio-label input { margin-top: 3px; flex-shrink: 0; accent-color: var(--text); }
+  .radio-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+  .style-pills { display: flex; gap: 6px; flex-wrap: wrap; }
   .pill {
-    padding: 5px 12px;
-    border-radius: 20px;
-    border: 0.5px solid var(--border-md);
-    font-size: 13px;
-    cursor: pointer;
-    background: transparent;
-    color: var(--text-secondary);
-    font-family: inherit;
-    transition: all 0.1s;
+    padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border-md);
+    font-size: 13px; cursor: pointer; background: transparent; color: var(--text-secondary);
+    font-family: inherit; -webkit-tap-highlight-color: transparent; transition: all 0.1s;
   }
-  .pill.selected {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-  }
-
-  .record-area {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-
+  .pill.selected { background: var(--text); color: var(--bg); border-color: var(--text); }
+  #custom-style-box { margin-top: 10px; display: none; }
+  #custom-style-box textarea { min-height: 90px; font-size: 13px; }
+  .record-area { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
   #record-btn {
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border-md);
-    background: var(--bg);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    color: var(--text);
-    flex-shrink: 0;
-    transition: all 0.15s;
+    width: 68px; height: 68px; border-radius: 50%; border: 1.5px solid var(--border-md);
+    background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: var(--text); flex-shrink: 0; -webkit-tap-highlight-color: transparent; transition: all 0.15s;
   }
-  #record-btn:hover { border-color: var(--text); }
-  #record-btn.recording {
-    border-color: #D85A30;
-    background: var(--danger-bg);
-    color: #D85A30;
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(216,90,48,0.2); }
-    50% { box-shadow: 0 0 0 8px rgba(216,90,48,0); }
-  }
-
-  .record-info { flex: 1; }
-
-  .status-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  .status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--text-tertiary);
-    flex-shrink: 0;
-  }
+  #record-btn.recording { border-color: var(--recording-color); background: var(--danger-bg); color: var(--recording-color); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(216,90,48,0.2); } 50% { box-shadow: 0 0 0 8px rgba(216,90,48,0); } }
+  .record-info { flex: 1; min-width: 0; }
+  .status-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; }
   .status-dot.active { background: var(--success); }
-  .status-dot.error { background: var(--danger); }
-
+  .status-dot.error { background: var(--danger-color); }
   #status-msg { font-size: 13px; color: var(--text-secondary); }
   #timer { font-size: 13px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-
-  #waveform {
-    height: 28px;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-  .wave-bar {
-    width: 3px;
-    border-radius: 2px;
-    background: var(--text-tertiary);
-    height: 4px;
-    transition: height 0.08s;
-  }
-
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  #waveform { height: 28px; display: flex; align-items: center; gap: 2px; }
+  .wave-bar { width: 3px; border-radius: 2px; background: var(--text-tertiary); height: 4px; transition: height 0.08s; }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .spacer { flex: 1; }
-
-  hr { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
-
   .output-wrap { position: relative; }
-  #copy-toast {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: var(--accent);
-    color: var(--accent-text);
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: var(--radius-md);
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
-  }
+  #copy-toast { position: absolute; bottom: 10px; right: 10px; background: var(--text); color: var(--bg); font-size: 12px; padding: 4px 10px; border-radius: var(--radius-md); opacity: 0; transition: opacity 0.2s; pointer-events: none; }
   #copy-toast.show { opacity: 1; }
-
   #diary-text { min-height: 180px; }
-
-  .settings-link {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    font-family: inherit;
-    padding: 0;
-  }
+  .settings-link { font-size: 12px; color: var(--text-tertiary); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; background: none; border: none; font-family: inherit; padding: 0; -webkit-tap-highlight-color: transparent; }
   .settings-link:hover { color: var(--text-secondary); }
-
-  @media (max-width: 480px) {
-    body { padding: 1rem 0.75rem; }
-    .btn-full { height: 46px; font-size: 14px; }
-  }
+  .install-banner { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.9rem 1.25rem; margin-bottom: 1rem; font-size: 13px; color: var(--text-secondary); line-height: 1.5; display: none; }
+  @media (max-width: 480px) { body { padding-left: 0.75rem; padding-right: 0.75rem; } }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="app-title">
-    <div class="dot"></div>
-    語音日記助手
+  <div class="app-title"><div class="dot"></div>語音日記助手</div>
+
+  <div class="install-banner" id="install-banner">
+    📱 想加到手機主畫面當 App？Safari 點下方「分享」→「加入主畫面」即可。
   </div>
 
   <!-- 設定畫面 -->
@@ -355,7 +124,6 @@
       </div>
       <div id="key-status">尚未設定 · <a href="https://aistudio.google.com/apikey" target="_blank">申請免費 Key ↗</a></div>
     </div>
-
     <div class="card">
       <div class="section-label">語音辨識方式</div>
       <div class="radio-group">
@@ -363,33 +131,35 @@
           <input type="radio" name="stt-mode" value="browser" checked>
           <div>
             <div>瀏覽器內建辨識（免費）</div>
-            <div class="radio-sub">完全不消耗 token，適合日常使用。需使用 Chrome 瀏覽器。</div>
+            <div class="radio-sub">不消耗 token。支援中英混合，自動偵測語言。需用 Chrome 或 Safari。</div>
           </div>
         </label>
         <label class="radio-label">
           <input type="radio" name="stt-mode" value="gemini">
           <div>
             <div>Gemini 語音辨識（較準確）</div>
-            <div class="radio-sub">辨識品質更好，錯字更少。每分鐘約消耗少量 token。</div>
+            <div class="radio-sub">辨識品質更好，中英混合更自然。每分鐘消耗少量 token。</div>
           </div>
         </label>
       </div>
     </div>
-
-    <button class="btn btn-primary btn-full" onclick="startApp()">
-      <i class="ti ti-arrow-right"></i>開始使用
-    </button>
+    <button class="btn btn-primary btn-full" onclick="startApp()"><i class="ti ti-arrow-right"></i>開始使用</button>
   </div>
 
   <!-- 主畫面 -->
   <div id="main-screen" style="display:none">
     <div class="card">
       <div class="section-label" style="margin-bottom:10px">日記風格</div>
-      <div class="style-pills" id="style-pills">
+      <div class="style-pills">
         <button class="pill selected" data-style="narrative">發文敘事感</button>
         <button class="pill" data-style="literary">淡淡文學風</button>
         <button class="pill" data-style="casual">輕鬆流水帳</button>
         <button class="pill" data-style="emotional">情緒抒發型</button>
+        <button class="pill" data-style="custom">我的風格</button>
+      </div>
+      <div id="custom-style-box">
+        <textarea id="custom-style-text" placeholder="貼上你喜歡的文字段落，AI 會模仿那種感覺來潤飾你的日記...&#10;&#10;例如：你欣賞的某篇日記、某段文章，或你自己以前寫過覺得滿意的內容。建議 100 字以上效果更好。"></textarea>
+        <div class="hint">AI 只會模仿風格和語感，不會抄內容。</div>
       </div>
     </div>
 
@@ -407,18 +177,12 @@
           <div id="waveform"></div>
         </div>
       </div>
-
       <div class="section-label" style="margin-bottom:6px">語音辨識文字</div>
       <textarea id="raw-text" placeholder="語音辨識後的文字會出現在這裡，你也可以直接貼上或手動修改..."></textarea>
-
       <div class="row" style="margin-top:10px">
-        <button class="btn" onclick="document.getElementById('raw-text').value=''">
-          <i class="ti ti-trash"></i>清除
-        </button>
+        <button class="btn" onclick="document.getElementById('raw-text').value=''"><i class="ti ti-trash"></i>清除</button>
         <div class="spacer"></div>
-        <button class="btn btn-primary" onclick="rewrite()" id="rewrite-btn">
-          <i class="ti ti-sparkles"></i>AI 潤飾成日記
-        </button>
+        <button class="btn btn-primary" onclick="rewrite()" id="rewrite-btn"><i class="ti ti-sparkles"></i>AI 潤飾成日記</button>
       </div>
     </div>
 
@@ -426,13 +190,9 @@
       <div class="section-label" style="margin-bottom:6px">潤飾後的日記</div>
       <textarea id="diary-text" placeholder="AI 潤飾後的日記會出現在這裡..."></textarea>
       <div class="row" style="margin-top:10px">
-        <button class="btn btn-primary" onclick="copyDiary()">
-          <i class="ti ti-copy"></i>複製到剪貼簿
-        </button>
+        <button class="btn btn-primary" onclick="copyDiary()"><i class="ti ti-copy"></i>複製到剪貼簿</button>
         <div class="spacer"></div>
-        <button class="settings-link" onclick="showSetup()">
-          <i class="ti ti-settings"></i>設定
-        </button>
+        <button class="settings-link" onclick="showSetup()"><i class="ti ti-settings"></i>設定</button>
       </div>
       <div id="copy-toast">已複製！</div>
     </div>
@@ -451,7 +211,6 @@ let mediaRecorder = null;
 let audioChunks = [];
 let waveInterval = null;
 let waveBars = [];
-
 const WAVE_COUNT = 18;
 
 const stylePrompts = {
@@ -461,15 +220,16 @@ const stylePrompts = {
   emotional: '以情緒為中心，誠實直接地表達感受，不過度修飾但有感染力'
 };
 
-// 還原設定
+if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && !window.navigator.standalone) {
+  document.getElementById('install-banner').style.display = 'block';
+}
+
 if (geminiKey) {
   document.getElementById('gemini-key').value = geminiKey;
-  document.getElementById('key-status').textContent = '✓ API Key 已儲存';
+  document.getElementById('key-status').textContent = '✓ API Key 已儲存（只存在你的裝置上）';
   document.getElementById('key-status').className = 'ok';
 }
-if (sttMode === 'gemini') {
-  document.querySelector('input[value="gemini"]').checked = true;
-}
+if (sttMode === 'gemini') document.querySelector('input[value="gemini"]').checked = true;
 
 function saveKey() {
   const k = document.getElementById('gemini-key').value.trim();
@@ -496,63 +256,49 @@ function showSetup() {
   document.getElementById('main-screen').style.display = 'none';
 }
 
-// 風格選擇
 document.querySelectorAll('.pill').forEach(p => {
   p.addEventListener('click', () => {
     document.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
     p.classList.add('selected');
     selectedStyle = p.dataset.style;
+    document.getElementById('custom-style-box').style.display = selectedStyle === 'custom' ? 'block' : 'none';
   });
 });
 
 function initWaveform() {
   const wv = document.getElementById('waveform');
-  wv.innerHTML = '';
-  waveBars = [];
+  wv.innerHTML = ''; waveBars = [];
   for (let i = 0; i < WAVE_COUNT; i++) {
-    const b = document.createElement('div');
-    b.className = 'wave-bar';
-    wv.appendChild(b);
-    waveBars.push(b);
+    const b = document.createElement('div'); b.className = 'wave-bar'; wv.appendChild(b); waveBars.push(b);
   }
 }
 
 function animateWave(active) {
   if (waveInterval) clearInterval(waveInterval);
   if (!active) { waveBars.forEach(b => b.style.height = '4px'); return; }
-  waveInterval = setInterval(() => {
-    waveBars.forEach(b => { b.style.height = (4 + Math.random() * 20) + 'px'; });
-  }, 90);
+  waveInterval = setInterval(() => { waveBars.forEach(b => { b.style.height = (4 + Math.random() * 20) + 'px'; }); }, 90);
 }
 
 function updateTimer() {
   timerSec++;
-  const m = Math.floor(timerSec / 60);
-  const s = timerSec % 60;
-  document.getElementById('timer').textContent = m + ':' + String(s).padStart(2, '0');
+  document.getElementById('timer').textContent = Math.floor(timerSec/60) + ':' + String(timerSec%60).padStart(2,'0');
 }
 
 function setStatus(msg, state) {
   document.getElementById('status-msg').textContent = msg;
-  const dot = document.getElementById('status-dot');
-  dot.className = 'status-dot' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
+  document.getElementById('status-dot').className = 'status-dot' + (state==='active'?' active':state==='error'?' error':'');
 }
 
-function toggleRecord() {
-  if (isRecording) stopRecording();
-  else startRecording();
-}
+function toggleRecord() { if (isRecording) stopRecording(); else startRecording(); }
 
 function startRecording() {
-  isRecording = true;
-  timerSec = 0;
+  isRecording = true; timerSec = 0;
   document.getElementById('record-btn').classList.add('recording');
   document.getElementById('record-icon').className = 'ti ti-player-stop';
   document.getElementById('timer').style.display = '';
   timerInterval = setInterval(updateTimer, 1000);
   animateWave(true);
-  if (sttMode === 'browser') startBrowserSpeech();
-  else startGeminiRecord();
+  if (sttMode === 'browser') startBrowserSpeech(); else startGeminiRecord();
 }
 
 function stopRecording() {
@@ -570,60 +316,64 @@ function stopRecording() {
 
 function startBrowserSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    setStatus('此瀏覽器不支援，請改用 Chrome', 'error');
-    stopRecording(); return;
-  }
-  recognition = new SR();
-  recognition.lang = 'zh-TW';
-  recognition.continuous = true;
-  recognition.interimResults = true;
+  if (!SR) { setStatus('請改用 Chrome 或 Safari', 'error'); stopRecording(); return; }
   let finalText = document.getElementById('raw-text').value;
-  recognition.onstart = () => setStatus('正在聆聽中...', 'active');
-  recognition.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
-      else interim = e.results[i][0].transcript;
-    }
-    document.getElementById('raw-text').value = finalText + interim;
-  };
-  recognition.onerror = (e) => { setStatus('辨識出錯：' + e.error, 'error'); stopRecording(); };
-  recognition.onend = () => { if (isRecording) recognition.start(); };
-  recognition.start();
+  let retries = 0;
+
+  function init() {
+    recognition = new SR();
+    recognition.lang = 'zh-TW';  // 主語言中文，但瀏覽器仍可辨識英文
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onstart = () => { retries = 0; setStatus('正在聆聽（中英混合皆可）...', 'active'); };
+    recognition.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim = e.results[i][0].transcript;
+      }
+      document.getElementById('raw-text').value = finalText + interim;
+    };
+    recognition.onerror = (e) => {
+      if (e.error === 'no-speech') return;
+      if ((e.error === 'network' || e.error === 'service-not-allowed') && retries < 3) {
+        retries++; setStatus('重試中...', 'active'); if (isRecording) setTimeout(init, 1000); return;
+      }
+      setStatus('辨識出錯：' + e.error, 'error'); stopRecording();
+    };
+    recognition.onend = () => { if (isRecording) setTimeout(() => { try { recognition.start(); } catch(_) {} }, 200); };
+    try { recognition.start(); } catch(e) { setStatus('無法啟動，請重整頁面', 'error'); stopRecording(); }
+  }
+  init();
 }
 
 function startGeminiRecord() {
   setStatus('準備錄音...', 'active');
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+    mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
     mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
     mediaRecorder.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
       setStatus('正在辨識語音...', 'active');
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      await transcribeWithGemini(blob);
+      await transcribeWithGemini(new Blob(audioChunks, { type: mime }), mime);
     };
     mediaRecorder.start();
     setStatus('正在錄音中...', 'active');
   }).catch(err => { setStatus('無法取得麥克風：' + err.message, 'error'); stopRecording(); });
 }
 
-async function transcribeWithGemini(blob) {
+async function transcribeWithGemini(blob, mime) {
   try {
     const b64 = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result.split(',')[1]);
-      r.onerror = rej;
-      r.readAsDataURL(blob);
+      const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(blob);
     });
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [
-        { text: '請把這段音訊轉錄成繁體中文文字，只輸出轉錄結果，不要加任何說明。' },
-        { inline_data: { mime_type: 'audio/webm', data: b64 } }
+        { text: '請把這段音訊轉錄成文字。說話者可能中英混合，請忠實轉錄，中文用繁體，只輸出轉錄文字，不要任何說明。' },
+        { inline_data: { mime_type: mime, data: b64 } }
       ]}]})
     });
     const data = await resp.json();
@@ -636,26 +386,40 @@ async function transcribeWithGemini(blob) {
 async function rewrite() {
   const raw = document.getElementById('raw-text').value.trim();
   if (!raw) { alert('請先輸入或錄製語音內容！'); return; }
+  if (selectedStyle === 'custom' && !document.getElementById('custom-style-text').value.trim()) {
+    alert('請先在「我的風格」欄位貼上你的風格範本！'); return;
+  }
   const btn = document.getElementById('rewrite-btn');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader"></i>處理中...';
   document.getElementById('diary-text').value = '';
-  const styleDesc = stylePrompts[selectedStyle];
+
   const today = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
-  const prompt = `今天是 ${today}。\n我用語音輸入了以下日記內容，可能有錯字、亂碼或語意不順的地方：\n\n「${raw}」\n\n請幫我完成兩件事：\n1. 修正錯字、亂碼，還原我真正想表達的意思。\n2. 將內容重寫成${styleDesc}。\n\n要求：\n- 保留原本的情節和細節，不要自行添加我沒說的內容\n- 不要加開頭問候語或「以下是」之類的說明\n- 直接輸出日記內文\n\n請直接輸出潤飾後的日記，不要其他說明。`;
+  let styleInstruction = selectedStyle === 'custom'
+    ? `模仿以下文字的風格、語氣和節奏感（只模仿風格，不要抄內容）：\n\n「${document.getElementById('custom-style-text').value.trim()}」`
+    : stylePrompts[selectedStyle];
+
+  const prompt = `今天是 ${today}。
+我用語音輸入了以下日記內容，可能有錯字、亂碼或語意不順（也可能中英混合）：
+
+「${raw}」
+
+請幫我完成兩件事：
+1. 修正錯字和亂碼，還原我真正想表達的意思。中英夾雜是正常的，保留即可。
+2. 將內容重寫成以下風格：${styleInstruction}
+
+要求：保留原本的情節和細節，不要自行添加我沒說的內容，不要加開頭問候語或任何說明，直接輸出日記內文。`;
+
   try {
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await resp.json();
     const result = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    if (result) document.getElementById('diary-text').value = result;
-    else document.getElementById('diary-text').value = '（出錯了：' + JSON.stringify(data?.error || data) + '）';
-  } catch(e) {
-    document.getElementById('diary-text').value = '（網路錯誤：' + e.message + '）';
-  }
+    document.getElementById('diary-text').value = result || '（出錯：' + JSON.stringify(data?.error || data) + '）';
+  } catch(e) { document.getElementById('diary-text').value = '（網路錯誤：' + e.message + '）'; }
+
   btn.disabled = false;
   btn.innerHTML = '<i class="ti ti-sparkles"></i>AI 潤飾成日記';
 }
@@ -670,7 +434,6 @@ function copyDiary() {
   });
 }
 
-// 如果已有 key，直接進主畫面
 if (geminiKey) {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('main-screen').style.display = 'block';
