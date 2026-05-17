@@ -77,7 +77,6 @@
   .provider-badge.groq { border-color: #f55036; color: #f55036; background: rgba(245,80,54,0.08); }
   .provider-badge.anthropic { border-color: #d1b490; color: #a3815b; background: rgba(209,180,144,0.15); }
 
-  /* API provider info block */
   .provider-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
   .provider-link-item { font-size: 12px; color: var(--text-tertiary); }
   .provider-link-item a { color: var(--text-secondary); }
@@ -120,6 +119,13 @@
   #stt-gemini-note { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; display: none; }
   #stt-gemini-note.show { display: block; }
 
+  /* Group Tabs */
+  .group-tabs { display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+  .group-tabs::-webkit-scrollbar { display: none; }
+  .group-tab { font-size: 14px; font-weight: 500; color: var(--text-tertiary); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-md); transition: color 0.15s, background 0.15s; }
+  .group-tab:hover { color: var(--text-secondary); background: var(--bg-secondary); }
+  .group-tab.active { color: var(--text); background: var(--bg-secondary); }
+
   .style-pills { display: flex; gap: 6px; flex-wrap: wrap; }
   .pill {
     padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border-md);
@@ -128,12 +134,12 @@
   }
   .pill.selected { background: var(--text); color: var(--bg); border-color: var(--text); }
   
-  /* 動態風格描述文字 */
-  #style-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; font-style: italic; display: flex; align-items: center; gap: 6px; }
-  #style-desc::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text-tertiary); }
+  #style-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; font-style: italic; display: flex; align-items: center; gap: 6px; line-height: 1.4; }
+  #style-desc::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; }
 
   #custom-style-box { margin-top: 10px; display: none; }
   #custom-style-box textarea { min-height: 90px; font-size: 13px; }
+  
   .record-area { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
   #record-btn {
     width: 68px; height: 68px; border-radius: 50%; border: 1.5px solid var(--border-md);
@@ -226,16 +232,19 @@
 
   <div id="main-screen" style="display:none">
     <div class="card">
-      <div class="section-label" style="margin-bottom:10px">日記風格</div>
-      <div class="style-pills">
-        <button class="pill selected" data-style="narrative">發文敘事感</button>
-        <button class="pill" data-style="literary">淡淡文學風</button>
-        <button class="pill" data-style="casual">輕鬆流水帳</button>
-        <button class="pill" data-style="emotional">情緒抒發型</button>
-        <button class="pill" data-style="original">原味輸出</button>
-        <button class="pill" data-style="custom">我的風格</button>
+      <div class="section-label" style="margin-bottom:4px">寫作風格</div>
+      
+      <div class="group-tabs" id="group-tabs">
+        <div class="group-tab active" data-group="diary">日記本</div>
+        <div class="group-tab" data-group="social">社群貼文</div>
+        <div class="group-tab" data-group="custom">自訂風格</div>
       </div>
-      <div id="style-desc">適合發佈在社群，帶有場景與故事感。</div>
+
+      <div class="style-pills" id="style-pills-container">
+        </div>
+      
+      <div id="style-desc"></div>
+
       <div id="custom-style-box">
         <textarea id="custom-style-text" placeholder="貼上你喜歡的文字段落讓 AI 模仿風格，或直接寫你的額外要求。&#10;&#10;建議 100 字以上風格模仿效果更好。"></textarea>
         <div class="hint">AI 只會模仿風格和語感，不會抄內容。</div>
@@ -261,13 +270,13 @@
       <div class="row" style="margin-top:10px">
         <button class="btn" onclick="document.getElementById('raw-text').value=''"><i class="ti ti-trash"></i>清除</button>
         <div class="spacer"></div>
-        <button class="btn btn-primary" onclick="rewrite()" id="rewrite-btn"><i class="ti ti-sparkles"></i>AI 潤飾成日記</button>
+        <button class="btn btn-primary" onclick="rewrite()" id="rewrite-btn"><i class="ti ti-sparkles"></i>AI 潤飾文字</button>
       </div>
     </div>
 
     <div class="card output-wrap">
-      <div class="section-label" style="margin-bottom:6px">潤飾後的日記</div>
-      <textarea id="diary-text" placeholder="AI 潤飾後的日記會出現在這裡..."></textarea>
+      <div class="section-label" style="margin-bottom:6px">潤飾後的結果</div>
+      <textarea id="diary-text" placeholder="AI 潤飾後的文字會出現在這裡..."></textarea>
       <div class="row" style="margin-top:10px">
         <button class="btn btn-primary" onclick="copyDiary()"><i class="ti ti-copy"></i>複製到剪貼簿</button>
         <div class="spacer"></div>
@@ -281,7 +290,71 @@
 <script>
 let apiKey = '';
 let sttMode = localStorage.getItem('diary_stt_mode') || 'browser';
-let selectedStyle = 'narrative';
+
+// --- 新版風格架構 ---
+const styleConfig = {
+  diary: [
+    { id: 'narrative', label: '場景敘事感', prompt: '帶有微小說敘事感，注重時序與畫面場景的描寫。語句要像現代人在說一個流暢的故事，自然且平易近人，絕不要矯情造作。', desc: '適合記錄事件，帶有現代場景與故事流動感。' },
+    { id: 'literary', label: '微文青散文', prompt: '現代都會散文風格。著重於五感與心理狀態的細膩描寫。請注意：必須使用現代白話文與日常詞彙，絕對禁止使用文言文、成語堆疊或古代文學字眼（如：餐罷、滂沱、抑或等）。語氣要是現代人的呢喃。', desc: '著重內心感受描寫，用字優美現代，絕對不含文言文。' },
+    { id: 'casual', label: '輕鬆流水帳', prompt: '輕鬆自然的流水帳，口語化但排版整齊，就像是用文字訊息跟好朋友交代今天發生了什麼事。', desc: '像跟好朋友聊天，輕鬆整齊的記事。' },
+    { id: 'emotional', label: '情緒日記', prompt: '以情緒抒發為中心，誠實且直接地表達當下的感受、脆弱或喜悅。不過度修飾，是很真實、無包袱的自我對話。', desc: '保留真實情緒起伏，適合純粹的自我對話。' },
+    { id: 'original', label: '原味輸出', prompt: '最小幅度整理。只幫忙修掉口語贅字（如：那個、然後）、補齊斷掉的邏輯，但絕對不改變說話者原本的用詞習慣、語感與語氣。', desc: '幫你挑錯字、順邏輯，保留你最原始的說話語氣。' }
+  ],
+  social: [
+    { id: 'threads', label: 'Threads 碎碎念', prompt: '台灣 Threads（脆）常見的發文風格。主打「抒發情緒、真實碎碎念、愈廢愈好」。語氣極度口語、隨性，帶有一點自嘲或幽默感，像是把腦袋裡的聲音直接打出來。句子簡短，節奏快，容易讓年輕網友產生共鳴。', desc: '極度口語的隨性碎碎念，節奏快，適合脆 (Threads)。' },
+    { id: 'ig', label: 'IG 生活氛圍', prompt: '台灣 Instagram 常見的生活風格貼文（Lifestyle）。文字帶有現代氛圍感，適合搭配照片閱讀。語氣輕鬆但不隨便，專注於當下生活的美好微小細節或精緻感。', desc: '強調生活氛圍與現代感，句子稍微精簡，適合配圖閱讀。' },
+    { id: 'emo', label: '深夜 EMO 貼文', prompt: '適合深夜發布在社群的感性文字。帶有現代人的反思、微小的無奈或孤獨感。用語深刻但不矯情做作，必須是日常白話文。', desc: '帶有反思與微小的孤獨感，適合深夜抒發。' }
+  ],
+  custom: [
+    { id: 'custom', label: '我的風格', prompt: '', desc: '在下方貼上你喜歡的文字，讓 AI 模仿該風格。' }
+  ]
+};
+
+let currentGroup = 'diary';
+let currentStyleObj = styleConfig.diary[0]; 
+
+function initStyles() {
+  const tabs = document.querySelectorAll('.group-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentGroup = tab.dataset.group;
+      renderStylePills();
+    });
+  });
+  renderStylePills();
+}
+
+function renderStylePills() {
+  const container = document.getElementById('style-pills-container');
+  container.innerHTML = '';
+  const styles = styleConfig[currentGroup];
+  
+  // 預設選取該群組的第一個
+  currentStyleObj = styles[0];
+
+  styles.forEach((style, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (index === 0 ? ' selected' : '');
+    btn.textContent = style.label;
+    btn.onclick = () => {
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      btn.classList.add('selected');
+      currentStyleObj = style;
+      updateStyleDesc();
+    };
+    container.appendChild(btn);
+  });
+  updateStyleDesc();
+}
+
+function updateStyleDesc() {
+  document.getElementById('style-desc').textContent = currentStyleObj.desc;
+  document.getElementById('custom-style-box').style.display = currentStyleObj.id === 'custom' ? 'block' : 'none';
+}
+
+// --- 以下為原有錄音與 API 邏輯 ---
 let recognition = null;
 let isRecording = false;
 let timerInterval = null;
@@ -292,32 +365,10 @@ let waveInterval = null;
 let waveBars = [];
 const WAVE_COUNT = 18;
 
-const stylePrompts = {
-  narrative: '帶有微小說敘事感、像在寫發文的風格，有時序感和場景感，但不誇張不矯情',
-  literary: '淡淡的文學氣質，用詞優美但克制，像是散文詩的調性',
-  casual: '輕鬆自然的流水帳，口語化但整齊，像朋友間傳的長訊息',
-  emotional: '以情緒為中心，誠實直接地表達感受，不過度修飾但有感染力',
-  original: '最小幅度整理，修掉口語贅字、補齊邏輯，但不改變原本的措辭、語感與說話方式。'
-};
+const GLOBAL_FORMAT_RULE = '格式要求：不使用任何標點符號（包括逗號、句號、頓號、問號、感嘆號等），句子之間用換行分隔，段落之間空一行，符合現代社群不愛用標點的排版方式。';
 
-const styleDescriptions = {
-  narrative: '適合發佈在社群，帶有場景與故事感。',
-  literary: '用字優美克制，適合夜間沉澱心情。',
-  casual: '像跟好朋友聊天，輕鬆整齊的流水帳。',
-  emotional: '誠實保留當下的情緒起伏，不加過多修飾。',
-  original: '幫你挑錯字、補邏輯，保留你最原始的說話語氣。',
-  custom: '貼上你喜歡的文字，讓 AI 模仿該風格。'
-};
-
-const GLOBAL_FORMAT_RULE = '格式要求：不使用任何標點符號（包括逗號、句號、頓號、問號、感嘆號等），句子之間用換行分隔，段落之間空一行，像社群發文的排版方式。';
-
-function loadKeyStore() {
-  try { return JSON.parse(localStorage.getItem('diary_key_store') || 'null'); } catch { return null; }
-}
-function saveKeyStore(store) {
-  localStorage.setItem('diary_key_store', JSON.stringify(store));
-}
-
+function loadKeyStore() { try { return JSON.parse(localStorage.getItem('diary_key_store') || 'null'); } catch { return null; } }
+function saveKeyStore(store) { localStorage.setItem('diary_key_store', JSON.stringify(store)); }
 function migrateOldKey() {
   const old = localStorage.getItem('diary_api_key');
   if (!old) return;
@@ -329,12 +380,10 @@ function migrateOldKey() {
   }
   localStorage.removeItem('diary_api_key');
 }
-
 function defaultLabel(key, provider) {
   const prefix = provider === 'gemini' ? 'Gemini' : provider === 'openai' ? 'OpenAI' : provider === 'groq' ? 'Groq' : provider === 'anthropic' ? 'Claude' : 'Key';
   return `${prefix} ···${key.slice(-4)}`;
 }
-
 function detectProvider(key) {
   if (!key) return null;
   if (key.startsWith('AIza')) return 'gemini';
@@ -343,20 +392,17 @@ function detectProvider(key) {
   if (key.startsWith('gsk_')) return 'groq';
   return 'unknown';
 }
-
 function providerBadgeHTML(provider) {
   const labels = { gemini: 'Gemini', openai: 'OpenAI', groq: 'Groq', anthropic: 'Anthropic', unknown: '未知' };
   const cls = provider === 'unknown' ? '' : provider;
   return `<span class="provider-badge ${cls}">${labels[provider] || '?'}</span>`;
 }
-
 function renderKeyList() {
   const store = loadKeyStore();
   const section = document.getElementById('saved-keys-section');
   const list = document.getElementById('key-list');
   if (!store || store.keys.length === 0) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-  list.innerHTML = '';
+  section.style.display = 'block'; list.innerHTML = '';
   store.keys.forEach(entry => {
     const isActive = entry.id === store.activeId;
     const div = document.createElement('div');
@@ -373,65 +419,48 @@ function renderKeyList() {
     list.appendChild(div);
   });
 }
-
 function selectKey(id) {
   const store = loadKeyStore();
   if (!store) return;
-  store.activeId = id;
-  saveKeyStore(store);
+  store.activeId = id; saveKeyStore(store);
   const entry = store.keys.find(k => k.id === id);
   if (entry) { apiKey = entry.key; updateSttOptions(entry.provider); }
-  renderKeyList();
-  updateActiveKeyStatus();
+  renderKeyList(); updateActiveKeyStatus();
 }
-
 function deleteKey(id) {
   const store = loadKeyStore();
   if (!store) return;
   store.keys = store.keys.filter(k => k.id !== id);
-  if (store.activeId === id) {
-    store.activeId = store.keys[0]?.id || null;
-    apiKey = store.keys[0]?.key || '';
-  }
-  saveKeyStore(store);
-  renderKeyList();
-  updateActiveKeyStatus();
+  if (store.activeId === id) { store.activeId = store.keys[0]?.id || null; apiKey = store.keys[0]?.key || ''; }
+  saveKeyStore(store); renderKeyList(); updateActiveKeyStatus();
 }
-
 function updateActiveKeyStatus() {
   const store = loadKeyStore();
   const el = document.getElementById('key-status');
-  if (!store || !store.activeId) {
-    el.className = ''; el.innerHTML = '尚未設定'; return;
-  }
+  if (!store || !store.activeId) { el.className = ''; el.innerHTML = '尚未設定'; return; }
   const entry = store.keys.find(k => k.id === store.activeId);
   if (!entry) { el.className = ''; el.innerHTML = '尚未設定'; return; }
   el.className = 'ok';
   el.innerHTML = `✓ 使用中：${providerBadgeHTML(entry.provider)} <span style="font-size:11px;color:var(--text-tertiary)">${entry.label}</span>`;
   updateSttOptions(entry.provider);
 }
-
 function onKeyInput() {
   const k = document.getElementById('api-key-input').value.trim();
   if (!k) { updateActiveKeyStatus(); return; }
   const provider = detectProvider(k);
   const el = document.getElementById('key-status');
-  el.className = '';
-  el.innerHTML = `偵測到：${providerBadgeHTML(provider)}`;
+  el.className = ''; el.innerHTML = `偵測到：${providerBadgeHTML(provider)}`;
   updateSttOptions(provider);
 }
-
 function updateSttOptions(provider) {
   const geminiOption = document.getElementById('stt-gemini-option');
   const geminiNote = document.getElementById('stt-gemini-note');
   const geminiRadio = document.getElementById('stt-gemini-radio');
   if (provider !== 'gemini') {
-    geminiOption.classList.add('disabled');
-    geminiNote.classList.add('show');
+    geminiOption.classList.add('disabled'); geminiNote.classList.add('show');
     if (geminiRadio.checked) document.querySelector('input[name="stt-mode"][value="browser"]').checked = true;
   } else {
-    geminiOption.classList.remove('disabled');
-    geminiNote.classList.remove('show');
+    geminiOption.classList.remove('disabled'); geminiNote.classList.remove('show');
   }
 }
 
@@ -439,26 +468,21 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && !window.navigator.s
   document.getElementById('install-banner').style.display = 'block';
 }
 
-migrateOldKey();
-renderKeyList();
-
+migrateOldKey(); renderKeyList();
 const _store = loadKeyStore();
 if (_store && _store.activeId) {
   const _active = _store.keys.find(k => k.id === _store.activeId);
   if (_active) { apiKey = _active.key; }
 }
 updateActiveKeyStatus();
-
 if (sttMode === 'gemini') document.querySelector('input[value="gemini"]').checked = true;
+initStyles();
 
 function saveKey() {
   const k = document.getElementById('api-key-input').value.trim();
   if (!k) return;
   const provider = detectProvider(k);
-  if (provider === 'unknown') {
-    alert('Key 格式看起來不對。\nGemini: AIza…\nOpenAI: sk-…\nGroq: gsk_…\nAnthropic: sk-ant-…');
-    return;
-  }
+  if (provider === 'unknown') { alert('Key 格式看起來不對。\nGemini: AIza…\nOpenAI: sk-…\nGroq: gsk_…\nAnthropic: sk-ant-…'); return; }
   const store = loadKeyStore() || { keys: [], activeId: null };
   const exists = store.keys.find(entry => entry.key === k);
   if (exists) {
@@ -491,16 +515,6 @@ function showSetup() {
   document.getElementById('main-screen').style.display = 'none';
 }
 
-document.querySelectorAll('.pill').forEach(p => {
-  p.addEventListener('click', () => {
-    document.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
-    p.classList.add('selected');
-    selectedStyle = p.dataset.style;
-    document.getElementById('custom-style-box').style.display = selectedStyle === 'custom' ? 'block' : 'none';
-    document.getElementById('style-desc').textContent = styleDescriptions[selectedStyle];
-  });
-});
-
 function initWaveform() {
   const wv = document.getElementById('waveform');
   wv.innerHTML = ''; waveBars = [];
@@ -508,42 +522,34 @@ function initWaveform() {
     const b = document.createElement('div'); b.className = 'wave-bar'; wv.appendChild(b); waveBars.push(b);
   }
 }
-
 function animateWave(active) {
   if (waveInterval) clearInterval(waveInterval);
   if (!active) { waveBars.forEach(b => b.style.height = '4px'); return; }
   waveInterval = setInterval(() => { waveBars.forEach(b => { b.style.height = (4 + Math.random() * 20) + 'px'; }); }, 90);
 }
-
 function updateTimer() {
-  timerSec++;
-  document.getElementById('timer').textContent = Math.floor(timerSec/60) + ':' + String(timerSec%60).padStart(2,'0');
+  timerSec++; document.getElementById('timer').textContent = Math.floor(timerSec/60) + ':' + String(timerSec%60).padStart(2,'0');
 }
-
 function setStatus(msg, state) {
   document.getElementById('status-msg').textContent = msg;
   document.getElementById('status-dot').className = 'status-dot' + (state==='active'?' active':state==='error'?' error':'');
 }
 
 function toggleRecord() { if (isRecording) stopRecording(); else startRecording(); }
-
 function startRecording() {
   isRecording = true; timerSec = 0;
   document.getElementById('record-btn').classList.add('recording');
   document.getElementById('record-icon').className = 'ti ti-player-stop';
   document.getElementById('timer').style.display = '';
-  timerInterval = setInterval(updateTimer, 1000);
-  animateWave(true);
+  timerInterval = setInterval(updateTimer, 1000); animateWave(true);
   if (sttMode === 'browser') startBrowserSpeech(); else startGeminiRecord();
 }
-
 function stopRecording() {
   if (!isRecording) return;
   isRecording = false; clearInterval(timerInterval);
   document.getElementById('record-btn').classList.remove('recording');
   document.getElementById('record-icon').className = 'ti ti-microphone';
-  document.getElementById('timer').style.display = 'none';
-  animateWave(false);
+  document.getElementById('timer').style.display = 'none'; animateWave(false);
   if (sttMode === 'browser' && recognition) { try { recognition.stop(); } catch(e) {} }
   if (sttMode === 'gemini' && mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   setStatus('按下麥克風開始說話', '');
@@ -552,17 +558,14 @@ function stopRecording() {
 function startBrowserSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { setStatus('請改用 Chrome 或 Safari', 'error'); stopRecording(); return; }
-  let finalText = document.getElementById('raw-text').value;
-  let retries = 0;
-
+  let finalText = document.getElementById('raw-text').value; let retries = 0;
   function init() {
     recognition = new SR(); recognition.lang = 'zh-TW'; recognition.continuous = true; recognition.interimResults = true;
     recognition.onstart = () => { retries = 0; setStatus('正在聆聽（中英混合皆可）...', 'active'); };
     recognition.onresult = (e) => {
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
-        else interim = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim = e.results[i][0].transcript;
       }
       document.getElementById('raw-text').value = finalText + interim;
     };
@@ -582,13 +585,11 @@ function startBrowserSpeech() {
 function startGeminiRecord() {
   setStatus('準備錄音...', 'active');
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    audioChunks = [];
-    const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+    audioChunks = []; const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
     mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
     mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
     mediaRecorder.onstop = async () => {
-      stream.getTracks().forEach(t => t.stop());
-      setStatus('正在辨識語音...', 'active');
+      stream.getTracks().forEach(t => t.stop()); setStatus('正在辨識語音...', 'active');
       await transcribeWithGemini(new Blob(audioChunks, { type: mime }), mime);
     };
     mediaRecorder.start(); setStatus('正在錄音中...', 'active');
@@ -616,21 +617,20 @@ async function transcribeWithGemini(blob, mime) {
 
 async function rewrite() {
   const raw = document.getElementById('raw-text').value.trim();
-  if (!raw) { alert('請先輸入或錄製語音內容！'); return; }
-  if (selectedStyle === 'custom' && !document.getElementById('custom-style-text').value.trim()) {
+  if (!raw) { alert('請先輸入或錄製內容！'); return; }
+  if (currentStyleObj.id === 'custom' && !document.getElementById('custom-style-text').value.trim()) {
     alert('請先在「我的風格」欄位貼上你的風格範本！'); return;
   }
+  
   const btn = document.getElementById('rewrite-btn');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i>處理中...';
   document.getElementById('diary-text').value = '';
 
-  const today = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
-  let styleInstruction = selectedStyle === 'custom'
+  let styleInstruction = currentStyleObj.id === 'custom'
     ? `模仿以下文字的風格、語氣和節奏感（只模仿風格，不要抄內容）：\n\n「${document.getElementById('custom-style-text').value.trim()}」\n\n如果上方文字中包含額外的格式或風格指示，請一併遵守。`
-    : stylePrompts[selectedStyle];
+    : currentStyleObj.prompt;
 
-  const prompt = `今天是 ${today}。
-我用語音輸入了以下日記內容，可能有錯字、亂碼或語意不順（也可能中英混合）：
+  const prompt = `我用語音輸入了以下內容，可能有錯字、亂碼或語意不順（也可能中英混合）：
 
 「${raw}」
 
@@ -638,7 +638,7 @@ async function rewrite() {
 1. 修正錯字和亂碼，還原我真正想表達的意思。中英夾雜是正常的，保留即可。
 2. 將內容重寫成以下風格：${styleInstruction}
 
-要求：保留原本的情節和細節，不要自行添加我沒說的內容，不要加開頭問候語或任何說明，直接輸出日記內文。
+要求：保留原本的情節和細節，不要自行添加我沒說的內容，不要加開頭問候語或任何說明，直接輸出內文。
 ${GLOBAL_FORMAT_RULE}`;
 
   try {
@@ -648,20 +648,25 @@ ${GLOBAL_FORMAT_RULE}`;
     if (provider === 'gemini') {
       result = await rewriteWithGemini(prompt);
     } else if (provider === 'openai') {
-      result = await rewriteWithOpenAICompatible(prompt, 'https://api.openai.com/v1/chat/completions', 'gpt-4o-mini');
+      result = await rewriteWithOpenAI(prompt);
     } else if (provider === 'groq') {
-      result = await rewriteWithOpenAICompatible(prompt, 'https://api.groq.com/openai/v1/chat/completions', 'llama-3.3-70b-versatile');
+      result = await rewriteWithGroq(prompt);
     } else if (provider === 'anthropic') {
       result = '（注意：Anthropic 官方不允許直接從前端瀏覽器呼叫 API，會產生 CORS 錯誤。建議改用 Groq 或 Gemini！）';
     } else {
       result = '（無法識別 API Key 格式，請到設定重新確認）';
     }
+    
     document.getElementById('diary-text').value = result;
   } catch(e) {
     document.getElementById('diary-text').value = '（網路錯誤：' + e.message + '）';
   }
-  btn.disabled = false; btn.innerHTML = '<i class="ti ti-sparkles"></i>AI 潤飾成日記';
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-sparkles"></i>AI 潤飾文字';
 }
+
+// ==========================================
+// API 呼叫函數區塊（各自獨立，方便未來單獨調整）
+// ==========================================
 
 async function rewriteWithGemini(prompt) {
   const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -672,19 +677,35 @@ async function rewriteWithGemini(prompt) {
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || '（出錯：' + JSON.stringify(data?.error || data) + '）';
 }
 
-async function rewriteWithOpenAICompatible(prompt, endpoint, model) {
-  const resp = await fetch(endpoint, {
+async function rewriteWithOpenAI(prompt) {
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: model,
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 1500,
       temperature: 0.85
     })
   });
   const data = await resp.json();
-  if (data.error) return '（API 錯誤：' + data.error.message + '）';
+  if (data.error) return '（OpenAI API 錯誤：' + data.error.message + '）';
+  return data?.choices?.[0]?.message?.content || '（回應為空）';
+}
+
+async function rewriteWithGroq(prompt) {
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1500,
+      temperature: 0.85
+    })
+  });
+  const data = await resp.json();
+  if (data.error) return '（Groq API 錯誤：' + data.error.message + '）';
   return data?.choices?.[0]?.message?.content || '（回應為空）';
 }
 
