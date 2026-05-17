@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>語音日記助手</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede8;
+    --text: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --accent: #1a1a18;
+    --accent-text: #ffffff;
+    --success: #0F6E56;
+    --danger: #A32D2D;
+    --danger-bg: #FAECE7;
+    --danger-border: #f09595;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #242422;
+      --bg-tertiary: #2c2c2a;
+      --text: #f0efe9;
+      --text-secondary: #b4b2a9;
+      --text-tertiary: #888780;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.2);
+      --accent: #f0efe9;
+      --accent-text: #1c1c1a;
+      --success: #5DCAA5;
+      --danger: #f09595;
+      --danger-bg: #2a1a16;
+      --danger-border: #993C1D;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .app-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+
+  .app-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+  }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  textarea {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  textarea:focus {
+    border-color: var(--border-md);
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  textarea {
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s, opacity 0.12s;
+  }
+  .btn:hover { background: var(--bg-secondary); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { opacity: 0.85; background: var(--accent); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-full {
+    width: 100%;
+    justify-content: center;
+    height: 42px;
+  }
+
+  .api-row {
+    display: flex;
+    gap: 8px;
+  }
+  .api-row input { flex: 1; }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .hint a { color: var(--text-secondary); }
+
+  #key-status {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+  }
+  #key-status.ok { color: var(--success); }
+
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  .radio-label input { margin-top: 2px; flex-shrink: 0; }
+  .radio-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+
+  .style-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border-md);
+    font-size: 13px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    transition: all 0.1s;
+  }
+  .pill.selected {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  .record-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  #record-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-md);
+    background: var(--bg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--text);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  #record-btn:hover { border-color: var(--text); }
+  #record-btn.recording {
+    border-color: #D85A30;
+    background: var(--danger-bg);
+    color: #D85A30;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(216,90,48,0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(216,90,48,0); }
+  }
+
+  .record-info { flex: 1; }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+  .status-dot.active { background: var(--success); }
+  .status-dot.error { background: var(--danger); }
+
+  #status-msg { font-size: 13px; color: var(--text-secondary); }
+  #timer { font-size: 13px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+  #waveform {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .wave-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--text-tertiary);
+    height: 4px;
+    transition: height 0.08s;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .spacer { flex: 1; }
+
+  hr { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
+
+  .output-wrap { position: relative; }
+  #copy-toast {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  #copy-toast.show { opacity: 1; }
+
+  #diary-text { min-height: 180px; }
+
+  .settings-link {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+  }
+  .settings-link:hover { color: var(--text-secondary); }
+
+  @media (max-width: 480px) {
+    body { padding: 1rem 0.75rem; }
+    .btn-full { height: 46px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app-title">
+    <div class="dot"></div>
+    語音日記助手
+  </div>
+
+  <!-- 設定畫面 -->
+  <div id="setup-screen">
+    <div class="card">
+      <div class="section-label">Gemini API Key</div>
+      <div class="api-row">
+        <input type="password" id="gemini-key" placeholder="貼上你的 Gemini API Key..." autocomplete="off">
+        <button class="btn btn-primary" onclick="saveKey()"><i class="ti ti-check"></i>儲存</button>
+      </div>
+      <div id="key-status">尚未設定 · <a href="https://aistudio.google.com/apikey" target="_blank">申請免費 Key ↗</a></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">語音辨識方式</div>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="stt-mode" value="browser" checked>
+          <div>
+            <div>瀏覽器內建辨識（免費）</div>
+            <div class="radio-sub">完全不消耗 token，適合日常使用。需使用 Chrome 瀏覽器。</div>
+          </div>
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="stt-mode" value="gemini">
+          <div>
+            <div>Gemini 語音辨識（較準確）</div>
+            <div class="radio-sub">辨識品質更好，錯字更少。每分鐘約消耗少量 token。</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="startApp()">
+      <i class="ti ti-arrow-right"></i>開始使用
+    </button>
+  </div>
+
+  <!-- 主畫面 -->
+  <div id="main-screen" style="display:none">
+    <div class="card">
+      <div class="section-label" style="margin-bottom:10px">日記風格</div>
+      <div class="style-pills" id="style-pills">
+        <button class="pill selected" data-style="narrative">發文敘事感</button>
+        <button class="pill" data-style="literary">淡淡文學風</button>
+        <button class="pill" data-style="casual">輕鬆流水帳</button>
+        <button class="pill" data-style="emotional">情緒抒發型</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="record-area">
+        <button id="record-btn" onclick="toggleRecord()" aria-label="開始錄音">
+          <i class="ti ti-microphone" id="record-icon"></i>
+        </button>
+        <div class="record-info">
+          <div class="status-row">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-msg">按下麥克風開始說話</span>
+            <span id="timer" style="display:none">0:00</span>
+          </div>
+          <div id="waveform"></div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-bottom:6px">語音辨識文字</div>
+      <textarea id="raw-text" placeholder="語音辨識後的文字會出現在這裡，你也可以直接貼上或手動修改..."></textarea>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="document.getElementById('raw-text').value=''">
+          <i class="ti ti-trash"></i>清除
+        </button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="rewrite()" id="rewrite-btn">
+          <i class="ti ti-sparkles"></i>AI 潤飾成日記
+        </button>
+      </div>
+    </div>
+
+    <div class="card output-wrap">
+      <div class="section-label" style="margin-bottom:6px">潤飾後的日記</div>
+      <textarea id="diary-text" placeholder="AI 潤飾後的日記會出現在這裡..."></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" onclick="copyDiary()">
+          <i class="ti ti-copy"></i>複製到剪貼簿
+        </button>
+        <div class="spacer"></div>
+        <button class="settings-link" onclick="showSetup()">
+          <i class="ti ti-settings"></i>設定
+        </button>
+      </div>
+      <div id="copy-toast">已複製！</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let geminiKey = localStorage.getItem('diary_gemini_key') || '';
+let sttMode = localStorage.getItem('diary_stt_mode') || 'browser';
+let selectedStyle = 'narrative';
+let recognition = null;
+let isRecording = false;
+let timerInterval = null;
+let timerSec = 0;
+let mediaRecorder = null;
+let audioChunks = [];
+let waveInterval = null;
+let waveBars = [];
+
+const WAVE_COUNT = 18;
+
+const stylePrompts = {
+  narrative: '帶有微小說敘事感、像在寫發文的風格，有時序感和場景感，但不誇張不矯情',
+  literary: '淡淡的文學氣質，用詞優美但克制，像是散文詩的調性',
+  casual: '輕鬆自然的流水帳，口語化但整齊，像朋友間傳的長訊息',
+  emotional: '以情緒為中心，誠實直接地表達感受，不過度修飾但有感染力'
+};
+
+// 還原設定
+if (geminiKey) {
+  document.getElementById('gemini-key').value = geminiKey;
+  document.getElementById('key-status').textContent = '✓ API Key 已儲存';
+  document.getElementById('key-status').className = 'ok';
+}
+if (sttMode === 'gemini') {
+  document.querySelector('input[value="gemini"]').checked = true;
+}
+
+function saveKey() {
+  const k = document.getElementById('gemini-key').value.trim();
+  if (!k) return;
+  geminiKey = k;
+  localStorage.setItem('diary_gemini_key', k);
+  const el = document.getElementById('key-status');
+  el.textContent = '✓ API Key 已儲存（只存在你的裝置上）';
+  el.className = 'ok';
+}
+
+function startApp() {
+  if (!geminiKey) { alert('請先貼上並儲存 Gemini API Key！'); return; }
+  sttMode = document.querySelector('input[name="stt-mode"]:checked').value;
+  localStorage.setItem('diary_stt_mode', sttMode);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'block';
+  initWaveform();
+}
+
+function showSetup() {
+  stopRecording();
+  document.getElementById('setup-screen').style.display = 'block';
+  document.getElementById('main-screen').style.display = 'none';
+}
+
+// 風格選擇
+document.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
+    p.classList.add('selected');
+    selectedStyle = p.dataset.style;
+  });
+});
+
+function initWaveform() {
+  const wv = document.getElementById('waveform');
+  wv.innerHTML = '';
+  waveBars = [];
+  for (let i = 0; i < WAVE_COUNT; i++) {
+    const b = document.createElement('div');
+    b.className = 'wave-bar';
+    wv.appendChild(b);
+    waveBars.push(b);
+  }
+}
+
+function animateWave(active) {
+  if (waveInterval) clearInterval(waveInterval);
+  if (!active) { waveBars.forEach(b => b.style.height = '4px'); return; }
+  waveInterval = setInterval(() => {
+    waveBars.forEach(b => { b.style.height = (4 + Math.random() * 20) + 'px'; });
+  }, 90);
+}
+
+function updateTimer() {
+  timerSec++;
+  const m = Math.floor(timerSec / 60);
+  const s = timerSec % 60;
+  document.getElementById('timer').textContent = m + ':' + String(s).padStart(2, '0');
+}
+
+function setStatus(msg, state) {
+  document.getElementById('status-msg').textContent = msg;
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
+}
+
+function toggleRecord() {
+  if (isRecording) stopRecording();
+  else startRecording();
+}
+
+function startRecording() {
+  isRecording = true;
+  timerSec = 0;
+  document.getElementById('record-btn').classList.add('recording');
+  document.getElementById('record-icon').className = 'ti ti-player-stop';
+  document.getElementById('timer').style.display = '';
+  timerInterval = setInterval(updateTimer, 1000);
+  animateWave(true);
+  if (sttMode === 'browser') startBrowserSpeech();
+  else startGeminiRecord();
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+  isRecording = false;
+  clearInterval(timerInterval);
+  document.getElementById('record-btn').classList.remove('recording');
+  document.getElementById('record-icon').className = 'ti ti-microphone';
+  document.getElementById('timer').style.display = 'none';
+  animateWave(false);
+  if (sttMode === 'browser' && recognition) { try { recognition.stop(); } catch(e) {} }
+  if (sttMode === 'gemini' && mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  setStatus('按下麥克風開始說話', '');
+}
+
+function startBrowserSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    setStatus('此瀏覽器不支援，請改用 Chrome', 'error');
+    stopRecording(); return;
+  }
+  recognition = new SR();
+  recognition.lang = 'zh-TW';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  let finalText = document.getElementById('raw-text').value;
+  recognition.onstart = () => setStatus('正在聆聽中...', 'active');
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim = e.results[i][0].transcript;
+    }
+    document.getElementById('raw-text').value = finalText + interim;
+  };
+  recognition.onerror = (e) => { setStatus('辨識出錯：' + e.error, 'error'); stopRecording(); };
+  recognition.onend = () => { if (isRecording) recognition.start(); };
+  recognition.start();
+}
+
+function startGeminiRecord() {
+  setStatus('準備錄音...', 'active');
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      setStatus('正在辨識語音...', 'active');
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      await transcribeWithGemini(blob);
+    };
+    mediaRecorder.start();
+    setStatus('正在錄音中...', 'active');
+  }).catch(err => { setStatus('無法取得麥克風：' + err.message, 'error'); stopRecording(); });
+}
+
+async function transcribeWithGemini(blob) {
+  try {
+    const b64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [
+        { text: '請把這段音訊轉錄成繁體中文文字，只輸出轉錄結果，不要加任何說明。' },
+        { inline_data: { mime_type: 'audio/webm', data: b64 } }
+      ]}]})
+    });
+    const data = await resp.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (text) { document.getElementById('raw-text').value += text; setStatus('辨識完成', 'active'); }
+    else setStatus('辨識失敗，請重試', 'error');
+  } catch(e) { setStatus('辨識出錯：' + e.message, 'error'); }
+}
+
+async function rewrite() {
+  const raw = document.getElementById('raw-text').value.trim();
+  if (!raw) { alert('請先輸入或錄製語音內容！'); return; }
+  const btn = document.getElementById('rewrite-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i>處理中...';
+  document.getElementById('diary-text').value = '';
+  const styleDesc = stylePrompts[selectedStyle];
+  const today = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  const prompt = `今天是 ${today}。\n我用語音輸入了以下日記內容，可能有錯字、亂碼或語意不順的地方：\n\n「${raw}」\n\n請幫我完成兩件事：\n1. 修正錯字、亂碼，還原我真正想表達的意思。\n2. 將內容重寫成${styleDesc}。\n\n要求：\n- 保留原本的情節和細節，不要自行添加我沒說的內容\n- 不要加開頭問候語或「以下是」之類的說明\n- 直接輸出日記內文\n\n請直接輸出潤飾後的日記，不要其他說明。`;
+  try {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await resp.json();
+    const result = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (result) document.getElementById('diary-text').value = result;
+    else document.getElementById('diary-text').value = '（出錯了：' + JSON.stringify(data?.error || data) + '）';
+  } catch(e) {
+    document.getElementById('diary-text').value = '（網路錯誤：' + e.message + '）';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-sparkles"></i>AI 潤飾成日記';
+}
+
+function copyDiary() {
+  const t = document.getElementById('diary-text').value;
+  if (!t) return;
+  navigator.clipboard.writeText(t).then(() => {
+    const toast = document.getElementById('copy-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  });
+}
+
+// 如果已有 key，直接進主畫面
+if (geminiKey) {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'block';
+  setTimeout(initWaveform, 0);
+}
+</script>
+</body>
+</html>
