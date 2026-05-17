@@ -650,7 +650,7 @@ ${GLOBAL_FORMAT_RULE}`;
     } else if (provider === 'openai') {
       result = await rewriteWithOpenAICompatible(prompt, 'https://api.openai.com/v1/chat/completions', 'gpt-4o-mini');
     } else if (provider === 'groq') {
-      result = await rewriteWithOpenAICompatible(prompt, 'https://api.groq.com/openai/v1/chat/completions', 'llama3-70b-8192');
+      result = await rewriteWithOpenAICompatible(prompt, 'https://api.groq.com/openai/v1/chat/completions', 'llama-3.3-70b-versatile');
     } else if (provider === 'anthropic') {
       result = '（注意：Anthropic 官方不允許直接從前端瀏覽器呼叫 API，會產生 CORS 錯誤。建議改用 Groq 或 Gemini！）';
     } else {
